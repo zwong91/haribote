@@ -38,6 +38,15 @@ struct BOOTINFO {
 	char *vram;
 };
 
+// 8 字节 = 64bit = 20位段大小 + 32位段起始地址 + 12位段属性
+/*
+段属性（12位）：GD000000xxxxxxxx
+0x00：未使用的记录表
+0x92：系统专用，可读、可写、不可执行（内核态）
+0x9a：系统专用，可执行、可读、不可写（内核态）
+0xf2：应用程序专用，可读、可写、不可执行（用户态）
+0xfa：应用程序专用，可执行、可读、不可写（用户态）
+*/
 struct SEGMENT_DESCRIPTOR {
 	short limit_low, base_low;
 	char base_mid, access_right;
@@ -156,6 +165,7 @@ void init_screen(char *vram, int x, int y)
 	return;
 }
 
+// 16 * 8 像素点矩阵
 void putfont8(char *vram, int xsize, int x, int y, char c, char *font)
 {
 	int i;

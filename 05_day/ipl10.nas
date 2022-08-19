@@ -1,4 +1,4 @@
-; haribote-ipl
+; haribote-ipl 读取磁盘
 ; TAB=4
 
 CYLS	EQU		10				; 声明CYLS=10
@@ -6,6 +6,7 @@ CYLS	EQU		10				; 声明CYLS=10
 		ORG		0x7c00			; 指明程序装载地址
 
 ; 标准FAT12格式软盘专用的代码 Stand FAT12 format floppy code
+; 80个柱面，2个磁头，18个扇区, 每个扇区 512 字节，共 1440 KB
 
 		JMP		entry
 		DB		0x90
@@ -50,7 +51,7 @@ readloop:
 retry:
 		MOV		AH,0x02			; AH=0x02 : 读入磁盘
 		MOV		AL,1			; 1个扇区
-		MOV		BX,0
+		MOV		BX,0			; ES:BX 为缓冲地址，即 0x8200
 		MOV		DL,0x00			; A驱动器
 		INT		0x13			; 调用磁盘BIOS
 		JNC		next			; 没出错则跳转到fin
@@ -66,19 +67,19 @@ next:
 		ADD		AX,0x0020
 		MOV		ES,AX			; ADD ES,0x020因为没有ADD ES，只能通过AX进行
 		ADD		CL,1			; 往CL里面加1
-		CMP		CL,18			; 比较CL与18
+		CMP		CL,18			; 比较CL与18, 读 18 个扇区
 		JBE		readloop		; CL <= 18 跳转到readloop
 		MOV		CL,1
 		ADD		DH,1
-		CMP		DH,2
+		CMP		DH,2			; 读 2 个磁头
 		JB		readloop		; DH < 2 跳转到readloop
 		MOV		DH,0
 		ADD		CH,1
-		CMP		CH,CYLS
+		CMP		CH,CYLS			; 读 10 个柱面
 		JB		readloop		; CH < CYLS 跳转到readloop
 
 ; 读取完毕，跳转到haribote.sys执行！
-		MOV		[0x0ff0],CH		; IPLがどこまで読んだのかをメモ
+		MOV		[0x0ff0],CH		; 将读取到的柱面数量写入内存地址 0x0ff0
 		JMP		0xc200
 
 error:
